@@ -192,6 +192,3 @@ if __name__ == "__main__":
             print('Invalid player turn')
         game.play_game(*test)
         current = player2_name
-        
-        
-        
