@@ -8,22 +8,33 @@ class Chess:
         self.player2_name = player2_name
         self.p1points = 0
         self.p2points = 0
-        self.characters = ['P1', 'P2', 'P3', 'P4', 'P5']
-        self.possible_moves = ['F', 'B', 'L', 'R']
+        # Types of characters = {'P': 'pawn'}
+        self.character_types = {}
+        # List of character names for each character type = {'P': [P1, P2, P3, P4, P5]}
+        self.characters = {}
+        # Possible moves = {'P': [F, B, L, R]}
+        self.possible_moves = {}
         self.grid = []
         self.dummy_char = dummy_char
         self.grid_len = grid_len
-        self.p1_valid_characters = ['P1', 'P2', 'P3', 'P4', 'P5']
-        self.p2_valid_characters = ['P1', 'P2', 'P3', 'P4', 'P5']
+        # For each character type, remaining characters on board
+        self.p1_valid_characters = {}
+        self.p2_valid_characters = {}
         
         
     def init_grid(self):
         for _ in range(self.grid_len):
             self.grid.append([self.dummy_char for _ in range(self.grid_len)])
-        self.p1_valid_characters = self.characters
-        self.p2_valid_characters = self.characters
+        
+        
+    def add_character(self, character_type, character_type_abbr, character_moves):
+        self.character_types[character_type_abbr] = character_type
+        self.possible_moves[character_type] = character_moves
+        self.p1_valid_characters[character_type] = character_moves
+        self.p2_valid_characters[character_type] = character_moves
+        
     
-    def deploy_player_chars(self, player_name):
+    def deploy_player_chars(self, player_name, character_type):
         if player_name == self.player1_name:
             pos = self.grid_len - 1
         else:
@@ -31,12 +42,12 @@ class Chess:
         
         # Randomly initialize 5 player positions
         if player_name == self.player1_name:
-            random.shuffle(self.p1_valid_characters)
-            for idx, char in enumerate(self.p1_valid_characters):
+            random.shuffle(self.p1_valid_characters[character_type])
+            for idx, char in enumerate(self.p1_valid_characters[character_type]):
                 self.grid[pos][idx] = player_name + '-' + char
         else:
-            random.shuffle(self.p2_valid_characters)
-            for idx, char in enumerate(self.p2_valid_characters):
+            random.shuffle(self.p2_valid_characters[character_type])
+            for idx, char in enumerate(self.p2_valid_characters[character_type]):
                 self.grid[pos][idx] = player_name + '-' + char
            
             
@@ -50,24 +61,30 @@ class Chess:
             reset_grid_if_won (bool): If any player has won, reset grid or not
         """        
         error_state = ''
+        # TODO: Better way of getting character type
+        character_type_abbr = character[0]
+        character_type = self.character_types[character_type_abbr]
         # Disable try/except if you WANT the error to stop execution of program
         try:
-        
             # Invalid move
-            if move not in self.possible_moves:
+            if character_type_abbr not in self.character_types:
+                error_state = 'Invalid character type'
+                raise Exception('ERROR: ', error_state)
+            
+            if move not in self.possible_moves[character_type]:
                 error_state = 'Invalid move'
                 raise Exception('ERROR: ', error_state)
             
             # Invalid character
             else:
                 if player_name == self.player1_name:
-                    if character not in self.p1_valid_characters:
+                    if character not in self.p1_valid_characters[character_type]:
                         error_state = 'Invalid character for {}'.format(player_name)
                         raise Exception('ERROR: ', error_state)
                         
                         
                 elif player_name == self.player2_name:
-                    if character not in self.p2_valid_characters:
+                    if character not in self.p2_valid_characters[character_type]:
                         error_state = 'Invalid character for {}'.format(player_name)
                         raise Exception('ERROR: ', error_state)
                 
@@ -102,7 +119,7 @@ class Chess:
                 raise Exception('ERROR: %s' % error_state)
                 
             # Attack friendly character
-            elif player_name in self.grid[new_position[0]][new_position[1]]:
+            elif self.grid[new_position[0]][new_position[1]].beginswith(player_name):
                 error_state = 'Attacking friendly character'
                 raise Exception('ERROR: %s' % error_state)
                 
@@ -140,8 +157,8 @@ class Chess:
             pass
     
     def get_position(self, player_name, character):
-        for i in range(5):
-            for j in range(5):
+        for i in range(self.grid_len):
+            for j in range(self.grid_len):
                 if self.grid[i][j] == player_name + '-' + character:
                     return (i, j)
     
@@ -167,7 +184,7 @@ if __name__ == "__main__":
     game.init_grid()
     
     # Add characters
-    # game.add_character('pawn', 'P', 5)
+    game.add_character('pawn', ['P1', 'P2', 'P3', 'P4', 'P5'])
     
     # Deploy characters
     game.deploy_player_chars(player1_name)
@@ -192,3 +209,6 @@ if __name__ == "__main__":
             print('Invalid player turn')
         game.play_game(*test)
         current = player2_name
+        
+        
+        
